@@ -170,25 +170,25 @@ def format_related_userstories(row):
     for element in subtasks:
         yield element
 
-# print('Posting stories and epics to Taiga (this could take a while)', flush=True)
-# with open(c.CSV_DUMP) as csvfile:
-#     reader = csv.DictReader(csvfile)
-#     for row in reader:
-#         parsed = False
-#         print('.', end="", flush=True)
-#         if row['Issue Type'] in c.STORY_ISSUE_TYPE:
-#             url = 'https://api.taiga.io/api/v1/userstories'
-#             data = format_story(row)
-#             parsed = True
-#         elif row['Issue Type'] in c.EPIC_ISSUE_TYPE:
-#             url = 'https://api.taiga.io/api/v1/epics'
-#             data = format_epic(row)
-#             parsed = True
-#         if parsed:
-#             data = json.dumps(data)
-#             r = requests.post(url, headers=headers, data=data)
+print('Posting stories and epics to Taiga (this could take a while)', flush=True)
+with open(c.CSV_DUMP) as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        parsed = False
+        print('.', end="", flush=True)
+        if row['Issue Type'] in c.STORY_ISSUE_TYPE:
+            url = 'https://api.taiga.io/api/v1/userstories'
+            data = format_story(row)
+            parsed = True
+        elif row['Issue Type'] in c.EPIC_ISSUE_TYPE:
+            url = 'https://api.taiga.io/api/v1/epics'
+            data = format_epic(row)
+            parsed = True
+        if parsed:
+            data = json.dumps(data)
+            r = requests.post(url, headers=headers, data=data)
 
-# print(' ')
+print(' ')
 
 print('Associating epics to stories in Taiga (this could take a while)', flush=True)
 with open(c.CSV_DUMP) as csvfile:
