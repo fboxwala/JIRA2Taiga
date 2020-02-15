@@ -126,8 +126,6 @@ def format_epic(row):
 
     description = row['Description']
     assignee = row['Assignee']
-    subtasks = df[df['Parent'] == float(row['Issue id'])]['Summary'].tolist()
-    subtasks = '\n'.join(subtasks)
     reporter = row['Reporter']
     related = row['Outward issue link (Relates)']
     watchers = row['Watchers']
@@ -139,8 +137,6 @@ def format_epic(row):
                    'Reporter: ' + reporter +
                    '\n'
                    'Watchers: ' + watchers +
-                   '\n'
-                   'Sub-Tasks: ' + subtasks +
                    '\n'
                    'Related Stories: ' + related)
 
@@ -169,23 +165,65 @@ def format_epic(row):
     }
 
     return postdict
+def format_related_userstories(row):
+    subtasks = df[df['Parent'] == float(row['Issue id'])]['Summary'].tolist()
+    for element in subtasks:
+        yield element
 
-print('Posting stories and epics to Taiga (this could take a while)', flush=True)
+# print('Posting stories and epics to Taiga (this could take a while)', flush=True)
+# with open(c.CSV_DUMP) as csvfile:
+#     reader = csv.DictReader(csvfile)
+#     for row in reader:
+#         parsed = False
+#         print('.', end="", flush=True)
+#         if row['Issue Type'] in c.STORY_ISSUE_TYPE:
+#             url = 'https://api.taiga.io/api/v1/userstories'
+#             data = format_story(row)
+#             parsed = True
+#         elif row['Issue Type'] in c.EPIC_ISSUE_TYPE:
+#             url = 'https://api.taiga.io/api/v1/epics'
+#             data = format_epic(row)
+#             parsed = True
+#         if parsed:
+#             data = json.dumps(data)
+#             r = requests.post(url, headers=headers, data=data)
+
+# print(' ')
+
+print('Associating epics to stories in Taiga (this could take a while)', flush=True)
 with open(c.CSV_DUMP) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        parsed = False
         print('.', end="", flush=True)
-        if row['Issue Type'] in c.STORY_ISSUE_TYPE:
-            url = 'https://api.taiga.io/api/v1/userstories'
-            data = format_story(row)
-            parsed = True
-        elif row['Issue Type'] in c.EPIC_ISSUE_TYPE:
-            url = 'https://api.taiga.io/api/v1/epics'
-            data = format_epic(row)
-            parsed = True
-        if parsed:
-            data = json.dumps(data)
-            r = requests.post(url, headers=headers, data=data)
+        if row['Issue Type'] in c.EPIC_ISSUE_TYPE:
+            epic_subject = row['Project key'] + ': ' + row['Summary']
+            subtasks = df[df['Parent'] == float(row['Issue id'])]
+
+            for _, story in subtasks.iterrows():
+                subject = story['Project key'] + ': ' + story['Summary']
+
+                # Get all user stories in project
+                url = f'https://api.taiga.io/api/v1/userstories?project={project_id}'
+                r = requests.get(url, headers=headers, data=data)
+                temp = pd.DataFrame(r.json())
+                # Select only ids of children of current epic
+                child_ids = temp['id'].where(temp['subject'] == subject).dropna().apply(int).tolist()
+
+                # Get all epics in project
+                url = f'https://api.taiga.io/api/v1/epics?project={project_id}'
+                r = requests.get(url, headers=headers, data=data)
+                temp = pd.DataFrame(r.json())
+                # Select current epic id
+                epic_id = temp['id'].where(temp['subject'] == epic_subject).dropna().apply(int).tolist()[0]
+                url = f'https://api.taiga.io/api/v1/epics/{epic_id}/related_userstories'
+
+                # Iterate for each child_id and make the request
+                for x in child_ids:
+                    data = {
+                        "epic": epic_id,
+                        "user_story": x
+                    }
+                    data = json.dumps(data)
+                    r = requests.post(url, headers=headers, data=data)
 
 print(' ')
