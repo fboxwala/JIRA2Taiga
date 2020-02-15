@@ -73,8 +73,6 @@ def format_story(row):
                    '\n'
                    'Reporter: ' + reporter +
                    '\n'
-                   'Assignee: ' + assignee +
-                   '\n'
                    'Watchers: ' + watchers +
                    '\n'
                    'Sub-Tasks: ' + subtasks +
@@ -84,6 +82,8 @@ def format_story(row):
     blocked = False
     closed = False
 
+    points  = row['Custom field (Story point estimate)']
+
     if row['Status'] in c.BLOCKED_STATUSES:
         blocked = True
 
@@ -91,7 +91,7 @@ def format_story(row):
         closed = True
 
     postdict = {
-        "assigned_to": None,
+        "assigned_to": c.USER_MAP[assignee],
         "backlog_order": 2,
         "blocked_note": "",
         "client_requirement": False,
@@ -100,7 +100,7 @@ def format_story(row):
         "is_closed": closed,
         "kanban_order": 37,
         "milestone": None,
-        "points": {},
+        "points": {"Jira": points},
         "project": project_id,
         "sprint_order": 2,
         "status": status,
