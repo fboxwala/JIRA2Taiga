@@ -114,17 +114,78 @@ def format_story(row):
 
 
 
-print('Posting stories to Taiga (this could take a while)', flush=True)
+def format_epic(row):
+
+    tags = row['Labels']
+    tags = tags.replace(',', '')
+    tags = tags.split()
+
+    status = status_map[row['Status']]
+
+    subject = row['Project key'] + ': ' + row['Summary']
+
+    description = row['Description']
+    assignee = row['Assignee']
+    subtasks = df[df['Parent'] == float(row['Issue id'])]['Summary'].tolist()
+    subtasks = '\n'.join(subtasks)
+    reporter = row['Reporter']
+    related = row['Outward issue link (Relates)']
+    watchers = row['Watchers']
+
+    description = ('Description: ' +
+                   description +
+                   '\n'
+                   '\n'
+                   'Reporter: ' + reporter +
+                   '\n'
+                   'Watchers: ' + watchers +
+                   '\n'
+                   'Sub-Tasks: ' + subtasks +
+                   '\n'
+                   'Related Stories: ' + related)
+
+    blocked = False
+    closed = False
+
+    points  = row['Custom field (Story point estimate)']
+
+    if row['Status'] in c.BLOCKED_STATUSES:
+        blocked = True
+
+    if row['Status'] in c.CLOSED_STATUSES:
+        closed = True
+
+    postdict = {
+        "assigned_to": c.USER_MAP[assignee],
+        "blocked_note": "",
+        "description": description,
+        "is_blocked": blocked,
+        "is_closed": closed,
+        "color": "",
+        "project": project_id,
+        "subject": subject,
+        "tags": tags,
+        "watchers": []
+    }
+
+    return postdict
+
+print('Posting stories and epics to Taiga (this could take a while)', flush=True)
 with open(c.CSV_DUMP) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
+        parsed = False
         print('.', end="", flush=True)
         if row['Issue Type'] in c.STORY_ISSUE_TYPE:
             url = 'https://api.taiga.io/api/v1/userstories'
             data = format_story(row)
+            parsed = True
         elif row['Issue Type'] in c.EPIC_ISSUE_TYPE:
-            pass
-        data = json.dumps(data)
-        r = requests.post(url, headers=headers, data=data)
+            url = 'https://api.taiga.io/api/v1/epics'
+            data = format_epic(row)
+            parsed = True
+        if parsed:
+            data = json.dumps(data)
+            r = requests.post(url, headers=headers, data=data)
 
 print(' ')
