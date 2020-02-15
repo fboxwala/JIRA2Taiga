@@ -194,7 +194,6 @@ print('Associating epics to stories in Taiga (this could take a while)', flush=T
 with open(c.CSV_DUMP) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        print('.', end="", flush=True)
         if row['Issue Type'] in c.EPIC_ISSUE_TYPE:
             epic_subject = row['Project key'] + ': ' + row['Summary']
             subtasks = df[df['Parent'] == float(row['Issue id'])]
@@ -219,6 +218,7 @@ with open(c.CSV_DUMP) as csvfile:
 
                 # Iterate for each child_id and make the request
                 for x in child_ids:
+                    print('.', end="", flush=True)
                     data = {
                         "epic": epic_id,
                         "user_story": x
