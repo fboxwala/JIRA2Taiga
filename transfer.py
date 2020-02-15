@@ -100,7 +100,7 @@ def format_story(row):
         "is_closed": closed,
         "kanban_order": 37,
         "milestone": None,
-        "points": {"Jira": points},
+        "points": {c.JIRA_PERMISSION: c.POINT_MAP[points]},
         "project": project_id,
         "sprint_order": 2,
         "status": status,
