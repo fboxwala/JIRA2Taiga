@@ -44,10 +44,12 @@ status_map = {}
 for jira, taiga in c.STATUS_MAP.items():
     status_map[jira] = status_ids[taiga]
 
-project_id = status_list[0]['project']
+project_id = status_list[0]['project_id']
+import pandas as pd
+df = pd.read_csv(c.CSV_DUMP)
 
 
-def format_post(row):
+def format_story(row):
 
     tags = row['Labels']
     tags = tags.replace(',', '')
@@ -55,13 +57,14 @@ def format_post(row):
 
     status = status_map[row['Status']]
 
-    subject = row['Key'] + ': ' + row['Summary']
+    subject = row['Project key'] + ': ' + row['Summary']
 
     description = row['Description']
     assignee = row['Assignee']
-    subtasks = row['Sub-Tasks']
+    subtasks = df[df['Parent'] == float(row['Issue id'])]['Summary'].tolist()
+    subtasks = '\n'.join(subtasks)
     reporter = row['Reporter']
-    linked = row['Linked Issues']
+    related = row['Outward issue link (Relates)']
     watchers = row['Watchers']
 
     description = ('Description: ' +
@@ -76,7 +79,7 @@ def format_post(row):
                    '\n'
                    'Sub-Tasks: ' + subtasks +
                    '\n'
-                   'Linked Stories: ' + linked)
+                   'Related Stories: ' + related)
 
     blocked = False
     closed = False
@@ -110,14 +113,17 @@ def format_post(row):
     return postdict
 
 
-url = 'https://api.taiga.io/api/v1/userstories'
 
 print('Posting stories to Taiga (this could take a while)', flush=True)
 with open(c.CSV_DUMP) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         print('.', end="", flush=True)
-        data = format_post(row)
+        if row['Issue Type'] in c.STORY_ISSUE_TYPE:
+            url = 'https://api.taiga.io/api/v1/userstories'
+            data = format_story(row)
+        elif row['Issue Type'] in c.EPIC_ISSUE_TYPE:
+            pass
         data = json.dumps(data)
         r = requests.post(url, headers=headers, data=data)
 
