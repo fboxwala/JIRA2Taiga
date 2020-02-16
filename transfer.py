@@ -82,7 +82,7 @@ def format_story(row):
     blocked = False
     closed = False
 
-    points  = row['Custom field (Story point estimate)']
+    points  = row[c.JIRA_POINTS_COLUMN]
 
     if row['Status'] in c.BLOCKED_STATUSES:
         blocked = True
@@ -142,8 +142,6 @@ def format_epic(row):
 
     blocked = False
     closed = False
-
-    points  = row['Custom field (Story point estimate)']
 
     if row['Status'] in c.BLOCKED_STATUSES:
         blocked = True
