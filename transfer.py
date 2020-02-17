@@ -60,8 +60,8 @@ def format_story(row):
     tags = tags.split()
 
     status = status_map[row['Status']]
-    if row['Issue Type'] in c.CUSTOM_USERTYPE_STATUS:
-        status = status_map[row['Issue Type']]
+    if row['Issue Type'] in c.CUSTOM_USERTYPE_TAGS:
+        tags.append(row['Issue Type'])
 
     subject = row['Project key'] + ': ' + row['Summary']
 
@@ -173,7 +173,6 @@ def format_epic(row):
 
 def associate_to_stories(row):
     epic_subject = row['Project key'] + ': ' + row['Summary']
-    print(epic_subject)
     subtasks = df[df['Parent'] == float(row['Issue id'])]
 
     # Get all epics in project
@@ -185,7 +184,6 @@ def associate_to_stories(row):
 
     for _, story in subtasks.iterrows():
         subject = story['Project key'] + ': ' + story['Summary']
-        print('\t'+subject)
 
         # Get all user stories in project
         url = f'https://api.taiga.io/api/v1/userstories?project={project_id}'
