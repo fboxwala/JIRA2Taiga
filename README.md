@@ -11,6 +11,8 @@ these in the description of each story.
 
 ## How to use this repo
 
+Install pandas: `pip install pandas`
+
 It’s a lot of work
 
 ### Setting up repos and dumps
